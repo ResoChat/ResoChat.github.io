@@ -35,19 +35,12 @@
             z-index: 9999; transition: opacity 0.5s ease;
         }
         .dots { display: flex; gap: 8px; }
-        .dot {
-            width: 12px; height: 12px;
-            background: var(--blurple); border-radius: 50%;
-            animation: bounce 0.6s infinite alternate;
-        }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
+        .dot { width: 12px; height: 12px; background: var(--blurple); border-radius: 50%; animation: bounce 0.6s infinite alternate; }
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
 
-        /* --- Main Layout --- */
+        /* --- Layout --- */
         .app-container { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
 
-        /* Server Rail (Fixed Width) */
         .server-rail {
             width: 72px; min-width: 72px; background: var(--bg-servers);
             display: flex; flex-direction: column; align-items: center;
@@ -61,43 +54,45 @@
         .server-icon.active, .server-icon:hover { border-radius: 16px; background: var(--blurple); }
         .divider { width: 32px; height: 2px; background: #35363c; margin: 4px 0; }
 
-        /* Sidebar (Fixed Width) */
-        .sidebar { 
-            width: 240px; min-width: 240px; background: var(--bg-sidebar); 
-            display: flex; flex-direction: column; flex-shrink: 0;
-        }
+        .sidebar { width: 240px; min-width: 240px; background: var(--bg-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 0 16px; height: 48px; display: flex; align-items: center; font-weight: 600; font-size: 14px; box-shadow: 0 1px 0 rgba(0,0,0,0.2); }
         
         .dm-list { flex: 1; padding: 8px; overflow-y: auto; }
-        .dm-item {
-            padding: 8px; border-radius: 4px; display: flex;
-            align-items: center; gap: 12px; cursor: pointer;
-            color: var(--text-muted); margin-bottom: 2px; transition: 0.1s;
-        }
+        .dm-item { padding: 8px; border-radius: 4px; display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--text-muted); margin-bottom: 2px; transition: 0.1s; }
         .dm-item:hover, .dm-item.active { background: #35373c; color: white; }
 
-        /* User Panel */
         .user-panel { height: 52px; background: var(--bg-user); padding: 0 8px; display: flex; align-items: center; gap: 8px; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
 
-        /* Main Content (Flexible) */
-        .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg-main); }
+        .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         .top-nav { height: 48px; padding: 0 16px; display: flex; align-items: center; box-shadow: 0 1px 0 rgba(0,0,0,0.2); gap: 12px; }
 
-        /* Chat UI */
-        .messages-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-        .message-row { display: flex; gap: 16px; animation: fadeIn 0.3s ease; }
-        .msg-content { flex: 1; min-width: 0; }
-        .msg-header { display: flex; align-items: baseline; gap: 8px; }
-        .msg-text { color: #dbdee1; word-wrap: break-word; white-space: pre-wrap; margin-top: 2px; }
+        /* --- Settings Overlay --- */
+        .settings-screen {
+            position: fixed; inset: 0; background: var(--bg-main); z-index: 10000;
+            transform: scale(1.1); opacity: 0; visibility: hidden;
+            transition: all 0.2s ease-out; padding: 60px;
+        }
+        .settings-screen.open { transform: scale(1); opacity: 1; visibility: visible; }
+
+        .setting-card { background: var(--bg-user); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .input-style { background: var(--bg-servers); border: 1px solid #111; color: white; padding: 10px; border-radius: 4px; width: 100%; box-sizing: border-box; }
         
-        .chat-input-wrap { padding: 0 16px 24px; }
-        .chat-input-box { background: var(--bg-input); border-radius: 8px; padding: 10px 16px; }
-        .chat-input-box input { width: 100%; background: transparent; border: none; color: white; outline: none; }
+        /* --- PFP Editor --- */
+        #pfp-editor { display: none; margin-top: 15px; text-align: center; }
+        canvas { background: #000; border-radius: 50%; margin: 10px 0; max-width: 200px; }
 
-        .settings-screen { position: fixed; inset: 0; background: var(--bg-main); z-index: 10000; display: none; padding: 60px; }
+        /* --- Chat UI --- */
+        .messages-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+        .message-row { display: flex; gap: 16px; }
+        .msg-text { color: #dbdee1; word-wrap: break-word; white-space: pre-wrap; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .friends-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-top: 1px solid #3f4147; transition: 0.2s; }
+        .friends-row:hover { background: #35373c; border-radius: 8px; }
+
+        .btn { border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-blurple { background: var(--blurple); color: white; }
+        .btn-success { background: var(--success); color: white; }
     </style>
 </head>
 <body>
@@ -108,9 +103,35 @@
 
     <div id="settings-overlay" class="settings-screen">
         <div style="max-width: 600px; margin: 0 auto;">
-            <h1>User Settings</h1>
-            <button onclick="logout()" style="background:var(--danger); border:none; color:white; padding:10px 20px; border-radius:4px; cursor:pointer; font-weight:bold;">Log Out</button>
-            <p onclick="toggleSettings(false)" style="margin-top:20px; cursor:pointer; color:var(--text-muted);">Back to Chat</p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h1>User Settings</h1>
+                <i data-lucide="x-circle" onclick="toggleSettings(false)" style="cursor:pointer;"></i>
+            </div>
+            
+            <div class="setting-card">
+                <label style="display:block; margin-bottom:10px; font-size:12px; font-weight:bold; color:var(--text-muted);">DISPLAY NAME</label>
+                <input type="text" id="set-display-name" class="input-style" placeholder="Enter display name">
+                <button onclick="updateProfile()" class="btn btn-blurple" style="margin-top:10px;">Save Changes</button>
+            </div>
+
+            <div class="setting-card">
+                <label style="display:block; margin-bottom:10px; font-size:12px; font-weight:bold; color:var(--text-muted);">PROFILE PICTURE</label>
+                <div style="display:flex; align-items:center; gap:20px;">
+                    <div id="settings-avatar-preview" class="avatar" style="width:80px; height:80px; font-size:30px;">?</div>
+                    <button onclick="document.getElementById('pfp-input').click()" class="btn btn-blurple">Change Avatar</button>
+                    <input type="file" id="pfp-input" hidden accept="image/*">
+                </div>
+
+                <div id="pfp-editor">
+                    <canvas id="crop-canvas" width="300" height="300"></canvas>
+                    <div>
+                        <button onclick="rotateImage()" class="btn">Rotate</button>
+                        <button onclick="savePFP()" class="btn btn-success">Save PFP</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="logout()" style="background:var(--danger); border:none; color:white; padding:10px 20px; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">Log Out</button>
         </div>
     </div>
 
@@ -130,8 +151,11 @@
             </div>
             <div class="user-panel">
                 <div id="u-avatar" class="avatar">?</div>
-                <div style="flex:1; min-width:0; font-size:13px; font-weight:600;" id="u-name">User</div>
-                <i data-lucide="settings" size="18" style="cursor:pointer; color:var(--text-muted);" onclick="toggleSettings(true)"></i>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="u-display-name">User</div>
+                    <div style="font-size:11px; color:var(--text-muted);" id="u-username">@username</div>
+                </div>
+                <i data-lucide="settings" size="18" id="gear-icon" style="cursor:pointer; color:var(--text-muted); transition: transform 0.3s ease;" onclick="toggleSettings(true)"></i>
             </div>
         </div>
 
@@ -143,7 +167,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, query, where, onSnapshot, deleteDoc, addDoc, orderBy, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, setDoc, collection, query, where, onSnapshot, deleteDoc, addDoc, orderBy, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -159,120 +183,183 @@
         const auth = getAuth(app);
         let currentUser = null;
         let unsub = null;
+        let rotation = 0;
+        let originalImg = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const snap = await getDoc(doc(db, "users", user.uid));
-                if (snap.exists()) {
-                    currentUser = { ...snap.data(), uid: user.uid };
-                    setupUI();
-                }
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
+                    if (snap.exists()) {
+                        currentUser = { ...snap.data(), uid: user.uid };
+                        updateUI();
+                    }
+                });
             } else { window.location.href = "index.html"; }
         });
 
-        function setupUI() {
-            document.getElementById('u-name').innerText = currentUser.username;
-            document.getElementById('u-avatar').innerText = currentUser.username[0];
-            document.getElementById('u-avatar').style.background = getAvatarColor(currentUser.username);
+        function updateUI() {
+            const displayName = currentUser.displayName || currentUser.username;
+            document.getElementById('u-display-name').innerText = displayName;
+            document.getElementById('u-username').innerText = `@${currentUser.username}`;
+            document.getElementById('set-display-name').value = displayName;
             
-            listenForFriends();
-            showFriendsView('all');
-            lucide.createIcons();
+            const avatars = [document.getElementById('u-avatar'), document.getElementById('settings-avatar-preview')];
+            avatars.forEach(av => {
+                if (currentUser.pfp) {
+                    av.style.backgroundImage = `url(${currentUser.pfp})`;
+                    av.innerText = "";
+                } else {
+                    av.style.backgroundImage = "none";
+                    av.innerText = currentUser.username[0];
+                    av.style.background = getAvatarColor(currentUser.username);
+                }
+            });
 
-            setTimeout(() => {
+            if (!document.getElementById('app-ui').style.visibility || document.getElementById('app-ui').style.visibility === "hidden") {
+                listenForFriends();
+                showFriendsView('all');
                 document.getElementById('loading-screen').style.opacity = '0';
                 document.getElementById('app-ui').style.visibility = 'visible';
                 setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
-            }, 1000);
+                lucide.createIcons();
+            }
         }
 
+        // --- FRIENDS LIST LOGIC ---
         window.showFriendsView = (view) => {
             if(unsub) unsub();
             document.getElementById('friends-tab-btn').classList.add('active');
             const nav = document.getElementById('top-nav');
-            nav.innerHTML = `<i data-lucide="users" style="color:var(--text-muted)"></i> <b>Friends</b>
-                             <div class="divider" style="width:1px; height:24px; margin:0 10px;"></div>
-                             <button onclick="showAddFriendView()" style="background:var(--success); color:white; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Add Friend</button>`;
+            nav.innerHTML = `<i data-lucide="users" style="color:var(--text-muted)"></i> <b style="font-size:16px;">Friends</b>
+                             <div style="width:1px; height:24px; background:#3f4147; margin:0 12px;"></div>
+                             <span class="nav-item ${view==='all'?'active':''}" onclick="showFriendsView('all')" style="cursor:pointer; padding:5px 10px;">All</span>
+                             <span class="nav-item ${view==='pending'?'active':''}" onclick="showFriendsView('pending')" style="cursor:pointer; padding:5px 10px;">Pending</span>
+                             <button onclick="showAddFriendView()" class="btn btn-success" style="margin-left:auto;">Add Friend</button>`;
             
             const area = document.getElementById('content-area');
-            area.innerHTML = `<div style="padding:20px; color:var(--text-muted);">Friends list logic here...</div>`;
+            area.innerHTML = `<div style="padding:20px;" id="friends-list-render"></div>`;
+
+            const q = view === 'all' 
+                ? collection(db, "users", currentUser.uid, "friends") 
+                : query(collection(db, "friend_requests"), where("to", "==", currentUser.uid));
+
+            onSnapshot(q, (snap) => {
+                const container = document.getElementById('friends-list-render');
+                container.innerHTML = `<div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">${view.toUpperCase()} — ${snap.size}</div>`;
+                snap.forEach(d => {
+                    const data = d.data();
+                    const name = data.username || data.fromName;
+                    const row = document.createElement('div');
+                    row.className = 'friends-row';
+                    row.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div class="avatar" style="width:38px; height:38px; background:${getAvatarColor(name)}">${name[0]}</div>
+                            <b>${name}</b>
+                        </div>
+                        <div id="act-${d.id}"></div>
+                    `;
+                    container.appendChild(row);
+                    if(view === 'pending') {
+                        document.getElementById(`act-${d.id}`).innerHTML = `
+                            <button onclick="acceptFriend('${d.id}', '${data.from}', '${data.fromName}')" class="btn btn-success">Accept</button>
+                            <button onclick="denyFriend('${d.id}')" class="btn" style="background:var(--danger); color:white;">Decline</button>`;
+                    } else {
+                        document.getElementById(`act-${d.id}`).innerHTML = `<i data-lucide="message-square" style="cursor:pointer;" onclick="openChat('${d.id}', '${name}')"></i>`;
+                    }
+                });
+                lucide.createIcons();
+            });
             lucide.createIcons();
         };
 
-        window.showAddFriendView = () => {
-            const area = document.getElementById('content-area');
-            area.innerHTML = `
-                <div style="padding:20px; max-width:400px;">
-                    <h3 style="margin-top:0;">ADD FRIEND</h3>
-                    <p style="font-size:13px; color:var(--text-muted);">Enter a username to send a request.</p>
-                    <div class="chat-input-box" style="display:flex; gap:10px;">
-                        <input type="text" id="target-name" placeholder="Username...">
-                        <button id="send-fr" style="background:var(--blurple); color:white; border:none; padding:5px 15px; border-radius:4px; cursor:pointer;">Send</button>
-                    </div>
-                    <p id="fr-status" style="margin-top:10px; font-size:14px;"></p>
-                </div>`;
-            
-            document.getElementById('send-fr').onclick = async () => {
-                const target = document.getElementById('target-name').value.toLowerCase().trim();
-                const status = document.getElementById('fr-status');
-                if(!target || target === currentUser.username.toLowerCase()) return;
-
-                const uSnap = await getDoc(doc(db, "usernames", target));
-                if(uSnap.exists()) {
-                    await addDoc(collection(db, "friend_requests"), {
-                        from: currentUser.uid, fromName: currentUser.username,
-                        to: uSnap.data().uid, status: 'pending'
-                    });
-                    status.innerText = "Request sent!";
-                    status.style.color = "var(--success)";
-                } else {
-                    status.innerText = "User not found.";
-                    status.style.color = "var(--danger)";
-                }
-            };
+        window.acceptFriend = async (rid, fuid, fname) => {
+            await setDoc(doc(db, "users", currentUser.uid, "friends", fuid), { username: fname });
+            await setDoc(doc(db, "users", fuid, "friends", currentUser.uid), { username: currentUser.username });
+            await deleteDoc(doc(db, "friend_requests", rid));
         };
 
+        window.denyFriend = async (rid) => { await deleteDoc(doc(db, "friend_requests", rid)); };
+
+        // --- PFP EDITOR LOGIC ---
+        document.getElementById('pfp-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                originalImg = new Image();
+                originalImg.onload = () => {
+                    document.getElementById('pfp-editor').style.display = 'block';
+                    drawCanvas();
+                };
+                originalImg.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        function drawCanvas() {
+            const canvas = document.getElementById('crop-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0,0,300,300);
+            ctx.save();
+            ctx.translate(150, 150);
+            ctx.rotate((rotation * Math.PI) / 180);
+            ctx.drawImage(originalImg, -100, -100, 200, 200);
+            ctx.restore();
+        }
+
+        window.rotateImage = () => { rotation += 90; drawCanvas(); };
+
+        window.savePFP = async () => {
+            const canvas = document.getElementById('crop-canvas');
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            await updateDoc(doc(db, "users", currentUser.uid), { pfp: dataUrl });
+            document.getElementById('pfp-editor').style.display = 'none';
+        };
+
+        window.updateProfile = async () => {
+            const newName = document.getElementById('set-display-name').value;
+            await updateDoc(doc(db, "users", currentUser.uid), { displayName: newName });
+            alert("Profile Updated!");
+        };
+
+        // --- CHAT LOGIC ---
         window.openChat = (friendId, friendName) => {
             if(unsub) unsub();
             document.getElementById('friends-tab-btn').classList.remove('active');
-            
             const nav = document.getElementById('top-nav');
-            nav.innerHTML = `<div class="avatar" style="width:24px; height:24px; font-size:10px; background:${getAvatarColor(friendName)}">${friendName[0]}</div> <b>${friendName}</b>`;
+            // Bigger Header
+            nav.innerHTML = `<div style="display:flex; align-items:center; gap:15px; padding:10px 0;">
+                                <div id="chat-header-av" class="avatar" style="width:42px; height:42px; font-size:18px;">?</div>
+                                <b style="font-size:18px;">${friendName}</b>
+                             </div>`;
+            
+            // Fetch friend data for PFP in header
+            getDoc(doc(db, "users", friendId)).then(s => {
+                const av = document.getElementById('chat-header-av');
+                if(s.data()?.pfp) av.style.backgroundImage = `url(${s.data().pfp})`;
+                else { av.innerText = friendName[0]; av.style.background = getAvatarColor(friendName); }
+            });
 
             const area = document.getElementById('content-area');
-            area.innerHTML = `
-                <div class="messages-container" id="m-list"></div>
-                <div class="chat-input-wrap">
-                    <div class="chat-input-box"><input type="text" id="m-input" placeholder="Message @${friendName}"></div>
-                </div>`;
+            area.innerHTML = `<div class="messages-container" id="m-list"></div>
+                              <div style="padding:0 16px 24px;"><div style="background:var(--bg-input); padding:10px; border-radius:8px;">
+                              <input type="text" id="m-input" style="width:100%; background:transparent; border:none; color:white; outline:none;" placeholder="Message @${friendName}">
+                              </div></div>`;
 
             const input = document.getElementById('m-input');
             input.focus();
-            input.onkeydown = (e) => {
-                if(e.key === 'Enter' && input.value.trim()) {
-                    const txt = input.value.trim();
-                    input.value = '';
-                    sendMessage(friendId, txt);
-                }
-            };
+            input.onkeydown = (e) => { if(e.key === 'Enter' && input.value.trim()){ sendMessage(friendId, input.value.trim()); input.value=''; }};
 
             const chatId = [currentUser.uid, friendId].sort().join('_');
-            const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"), limit(50));
-            
-            unsub = onSnapshot(q, (snap) => {
-                const list = document.getElementById('m-list');
-                list.innerHTML = '';
+            unsub = onSnapshot(query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"), limit(50)), (snap) => {
+                const list = document.getElementById('m-list'); list.innerHTML = '';
                 snap.forEach(d => {
                     const m = d.data();
-                    const time = m.timestamp ? m.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '...';
-                    list.innerHTML += `
-                        <div class="message-row">
-                            <div class="avatar" style="background:${getAvatarColor(m.senderName)}">${m.senderName[0]}</div>
-                            <div class="msg-content">
-                                <div class="msg-header"><b>${m.senderName}</b> <span style="font-size:11px; color:var(--text-muted)">${time}</span></div>
-                                <div class="msg-text">${m.text}</div>
-                            </div>
-                        </div>`;
+                    const time = m.timestamp ? m.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+                    list.innerHTML += `<div class="message-row">
+                        <div class="avatar" style="width:40px; height:40px; background:${getAvatarColor(m.senderName)}">${m.senderName[0]}</div>
+                        <div><div style="display:flex; align-items:baseline; gap:8px;"><b>${m.senderDisplayName || m.senderName}</b> <span style="font-size:11px; color:var(--text-muted)">${time}</span></div>
+                        <div class="msg-text">${m.text}</div></div></div>`;
                 });
                 list.scrollTop = list.scrollHeight;
             });
@@ -281,30 +368,37 @@
         async function sendMessage(toId, text) {
             const cid = [currentUser.uid, toId].sort().join('_');
             await addDoc(collection(db, "chats", cid, "messages"), {
-                text, senderId: currentUser.uid, senderName: currentUser.username, timestamp: serverTimestamp()
+                text, senderId: currentUser.uid, senderName: currentUser.username, 
+                senderDisplayName: currentUser.displayName || currentUser.username,
+                timestamp: serverTimestamp()
             });
         }
 
+        window.toggleSettings = (s) => {
+            const over = document.getElementById('settings-overlay');
+            const gear = document.getElementById('gear-icon');
+            if(s) { over.classList.add('open'); gear.style.transform = "rotate(90deg)"; }
+            else { over.classList.remove('open'); gear.style.transform = "rotate(0deg)"; }
+        };
+
         function listenForFriends() {
             onSnapshot(collection(db, "users", currentUser.uid, "friends"), (snap) => {
-                const list = document.getElementById('active-dms');
-                list.innerHTML = '';
+                const list = document.getElementById('active-dms'); list.innerHTML = '';
                 snap.forEach(d => {
                     const f = d.data();
                     const item = document.createElement('div');
                     item.className = 'dm-item';
                     item.onclick = () => openChat(d.id, f.username);
-                    item.innerHTML = `<div class="avatar" style="width:24px; height:24px; font-size:10px; background:${getAvatarColor(f.username)}">${f.username[0]}</div> <span>${f.username}</span>`;
+                    item.innerHTML = `<div class="avatar" style="width:32px; height:32px; font-size:12px; background:${getAvatarColor(f.username)}">${f.username[0]}</div> <span>${f.username}</span>`;
                     list.appendChild(item);
                 });
             });
         }
 
-        window.toggleSettings = (s) => document.getElementById('settings-overlay').style.display = s ? 'block' : 'none';
         window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
         function getAvatarColor(n) {
             const c = ['#ff5c5c', '#5865f2', '#23a559', '#f1c40f', '#e67e22', '#9b59b6', '#1abc9c'];
-            let h = 0; for (let i = 0; i < n.length; i++) h = n.charCodeAt(i) + ((h << 5) - h);
+            let h = 0; for (let i = 0; i < n.length; i++) h = n.charCodeAt(i) + ((h << 5) - hash);
             return c[Math.abs(h) % c.length];
         }
     </script>
