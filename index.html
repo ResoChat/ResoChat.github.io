@@ -1,15 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>ResoChat</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; padding: 50px; }
-    h1 { color: #4a90e2; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResoChat</title>
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/ResoChat/ResoChat.github.io/refs/heads/main/favicon.ico">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-main: #313338; --bg-secondary: #2b2d31; --bg-input: #1e1f22;
+            --blurple: #5865f2; --blurple-hover: #4752c4; --danger: #fa777a;
+            --success: #23a559; --text-muted: #b5bac1; --disabled-gray: #4e5058;
+            --chat-blue: #404eed; /* A dark blue that is vibrant enough to read on the gradient */
+        }
+
+        body {
+            background: radial-gradient(circle at center, #5865f2 0%, #313338 100%);
+            font-family: 'gg sans', sans-serif;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            min-height: 100vh; 
+            margin: 0; 
+            overflow-y: auto; /* Changed to allow scrolling */
+            color: white;
+            padding-bottom: 40px; /* Space at the bottom for scrolling */
+        }
+
+        .site-header {
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            padding: 40px 0 20px 0; 
+            user-select: none;
+        }
+
+        .site-title { 
+            font-size: 42px; 
+            font-weight: 800; 
+            letter-spacing: -1.5px; 
+        }
+
+        .text-reso { color: white; }
+        .text-chat { color: var(--chat-blue); }
+
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .auth-card {
+            background: var(--bg-main); 
+            padding: 32px; 
+            border-radius: 8px; 
+            width: 420px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5); 
+            animation: fadeIn 0.4s ease-out;
+            box-sizing: border-box;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { text-align: center; margin: 0 0 20px 0; font-size: 24px; }
+        .input-group { position: relative; margin-bottom: 22px; }
+        label { display: block; color: var(--text-muted); font-size: 11px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+
+        input {
+            width: 100%; padding: 10px; background: var(--bg-input);
+            border: 1px solid transparent; border-radius: 3px;
+            color: white; box-sizing: border-box; outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input.invalid { border-color: var(--danger); box-shadow: 0 0 4px rgba(250, 119, 122, 0.2); }
+        input.valid { border-color: var(--success); box-shadow: 0 0 4px rgba(35, 165, 89, 0.2); }
+
+        .error-msg { color: var(--danger); font-size: 11px; margin-top: 4px; display: none; font-weight: 500; }
+        .eye-icon { position: absolute; right: 12px; top: 30px; cursor: pointer; color: var(--text-muted); width: 18px; }
+
+        .primary-btn {
+            width: 100%; padding: 12px; background: var(--blurple);
+            color: white; border: none; border-radius: 3px;
+            cursor: pointer; font-weight: 600; font-size: 15px;
+        }
+        .primary-btn:disabled { background: var(--disabled-gray); cursor: not-allowed; color: #a3a6aa; }
+
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(15px); display: flex; 
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+
+        .modal-content { background: var(--bg-secondary); padding: 40px; border-radius: 12px; text-align: center; width: 340px; position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 15px; cursor: pointer; color: var(--text-muted); }
+        .hidden { display: none !important; }
+        .link-text { color: #00a8fc; cursor: pointer; font-size: 14px; text-decoration: none; }
+        .forgot-pw { font-size: 12px; margin-top: 4px; display: inline-block; }
+
+        /* Mobile responsiveness */
+        @media (max-width: 480px) {
+            .auth-card { width: 90%; padding: 20px; }
+        }
+    </style>
 </head>
 <body>
-  <h1>Welcome to ResoChat!</h1>
-  <p>Your new community platform starts here.</p>
+
+    <header class="site-header">
+        <span class="site-title"><span class="text-reso">Reso</span><span class="text-chat">Chat</span></span>
+    </header>
+
+    <div class="auth-container">
+        <div id="login-form" class="auth-card">
+            <h2>Login</h2>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="login-email" placeholder="Email">
+                <div id="err-login-email" class="error-msg"></div>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="Password">
+                <i data-lucide="eye" class="eye-icon" onclick="togglePw('login-password', this)"></i>
+                <span class="link-text forgot-pw" onclick="openResetModal()">Forgot Password?</span>
+                <div id="err-login-pw" class="error-msg"></div>
+            </div>
+            <button class="primary-btn" id="btn-login">Log In</button>
+            <p style="text-align:center; font-size: 14px; color: var(--text-muted); margin-top: 15px;">
+                Need an account? <span class="link-text" onclick="toggleView()">Register</span>
+            </p>
+        </div>
+
+        <div id="register-form" class="auth-card hidden">
+            <h2>Create Account</h2>
+            <form id="signup-form-logic">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="reg-email" placeholder="Email" required>
+                    <div id="err-email" class="error-msg">Email is already taken</div>
+                </div>
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="reg-username" maxlength="16" placeholder="Username" required>
+                    <div id="err-user" class="error-msg"></div>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="reg-password" placeholder="Password" required>
+                    <i data-lucide="eye" class="eye-icon" onclick="togglePw('reg-password', this)"></i>
+                    <div id="err-pw" class="error-msg">Password must be 8+ characters</div>
+                </div>
+                <div class="input-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="reg-confirm" placeholder="Confirm Password" required>
+                    <i data-lucide="eye" class="eye-icon" onclick="togglePw('reg-confirm', this)"></i>
+                    <div id="err-confirm" class="error-msg">Passwords do not match</div>
+                </div>
+                <button type="submit" class="primary-btn">Continue</button>
+            </form>
+            <p style="text-align:center; margin-top: 15px;"><span class="link-text" onclick="toggleView()">Already have an account?</span></p>
+        </div>
+
+        <div id="verify-modal" class="overlay hidden">
+            <div class="modal-content">
+                <div class="close-btn" onclick="closeModals()"><i data-lucide="x"></i></div>
+                <h3>Check your Email</h3>
+                <p style="color: var(--text-muted); font-size: 14px;">Instructions sent. Check spam/trash.</p>
+                <button id="resend-btn" class="primary-btn" disabled>Resend Email</button>
+                <div id="countdown-timer" style="margin-top:12px; font-size:12px; color:gray;">10s</div>
+            </div>
+        </div>
+
+        <div id="reset-modal" class="overlay hidden">
+            <div class="modal-content">
+                <div class="close-btn" onclick="closeModals()"><i data-lucide="x"></i></div>
+                <h3>Reset Password</h3>
+                <div id="reset-initial-view">
+                    <div class="input-group" style="text-align: left;">
+                        <label>Email</label>
+                        <input type="email" id="reset-email" placeholder="Email">
+                        <div id="err-reset" class="error-msg">Email not registered</div>
+                    </div>
+                    <button class="primary-btn" id="btn-do-reset">Continue</button>
+                </div>
+                <div id="reset-success-view" class="hidden">
+                    <p style="color: var(--text-muted); font-size: 14px;">Check your email for instructions.</p>
+                    <button class="primary-btn" onclick="closeModals()">Back to Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQTMaN3vqB2SULVQLqy40VaMB413x7LGg",
+            authDomain: "reso-chat.firebaseapp.com",
+            projectId: "reso-chat",
+            storageBucket: "reso-chat.firebasestorage.app",
+            messagingSenderId: "693778277273",
+            appId: "1:693778277273:web:3419c420aa2018929aa908"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        lucide.createIcons();
+
+        const setStatus = (inputId, errId, isValid, msg) => {
+            const input = document.getElementById(inputId);
+            const err = document.getElementById(errId);
+            input.className = isValid ? 'valid' : 'invalid';
+            if(err) { err.innerText = msg || ''; err.style.display = isValid ? 'none' : 'block'; }
+        };
+
+        const redirectToApp = (email) => {
+            const randomID = Math.random().toString(36).substring(2, 15);
+            window.location.href = `https://resochat.github.io/app.html?session=${randomID}&user=${btoa(email)}`;
+        };
+
+        window.toggleView = () => {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('register-form').classList.toggle('hidden');
+            document.querySelectorAll('input').forEach(i => { i.className = ''; i.value = ''; });
+            document.querySelectorAll('.error-msg').forEach(e => e.style.display = 'none');
+            // Scroll to top when switching views to ensure they see the header
+            window.scrollTo(0,0);
+        };
+
+        window.togglePw = (id, icon) => {
+            const el = document.getElementById(id);
+            el.type = el.type === 'password' ? 'text' : 'password';
+            icon.setAttribute('data-lucide', el.type === 'password' ? 'eye' : 'eye-off');
+            lucide.createIcons();
+        };
+
+        window.closeModals = () => document.querySelectorAll('.overlay').forEach(m => m.classList.add('hidden'));
+
+        window.openResetModal = () => {
+            document.getElementById('reset-modal').classList.remove('hidden');
+            document.getElementById('reset-initial-view').classList.remove('hidden');
+            document.getElementById('reset-success-view').classList.add('hidden');
+        };
+
+        // Verification Checks (Email/Username Availability)
+        document.getElementById('reg-email').addEventListener('blur', async (e) => {
+            if(!e.target.value) return;
+            const q = query(collection(db, "users"), where("email", "==", e.target.value));
+            const snap = await getDocs(q);
+            setStatus('reg-email', 'err-email', snap.empty, snap.empty ? '' : 'Email already taken');
+        });
+
+        document.getElementById('reg-username').addEventListener('input', async (e) => {
+            let val = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+            e.target.value = val;
+            if(val.length < 4) return setStatus('reg-username', 'err-user', false, 'Min 4 characters');
+            const snap = await getDoc(doc(db, "usernames", val));
+            setStatus('reg-username', 'err-user', !snap.exists(), !snap.exists() ? '' : 'Username taken');
+        });
+
+        const checkMatch = () => {
+            const p = document.getElementById('reg-password').value;
+            const c = document.getElementById('reg-confirm').value;
+            setStatus('reg-password', 'err-pw', p.length >= 8, 'Min 8 characters');
+            if(c) setStatus('reg-confirm', 'err-confirm', p === c, 'Passwords do not match');
+        };
+        document.getElementById('reg-password').addEventListener('input', checkMatch);
+        document.getElementById('reg-confirm').addEventListener('input', checkMatch);
+
+        // Sign Up Action
+        document.getElementById('signup-form-logic').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const user = document.getElementById('reg-username').value;
+            const pass = document.getElementById('reg-password').value;
+            if(document.querySelectorAll('.invalid').length > 0) return;
+
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                await setDoc(doc(db, "usernames", user), { uid: cred.user.uid });
+                await setDoc(doc(db, "users", cred.user.uid), { email, username: user });
+                await sendEmailVerification(cred.user);
+                document.getElementById('verify-modal').classList.remove('hidden');
+                runTimer(); pollVerif();
+            } catch (err) { alert(err.message); }
+        });
+
+        // Login Action
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            try {
+                const cred = await signInWithEmailAndPassword(auth, email, pass);
+                if (!cred.user.emailVerified) {
+                    document.getElementById('verify-modal').classList.remove('hidden');
+                    pollVerif();
+                } else redirectToApp(email);
+            } catch (err) {
+                setStatus('login-email', 'err-login-email', false, 'Invalid Credentials');
+                setStatus('login-password', 'err-login-pw', false, 'Invalid Credentials');
+            }
+        });
+
+        // Reset Password Action
+        document.getElementById('btn-do-reset').addEventListener('click', async () => {
+            const email = document.getElementById('reset-email').value;
+            const q = query(collection(db, "users"), where("email", "==", email));
+            const snap = await getDocs(q);
+            if (snap.empty) {
+                setStatus('reset-email', 'err-reset', false, 'Email not registered');
+            } else {
+                await sendPasswordResetEmail(auth, email);
+                document.getElementById('reset-initial-view').classList.add('hidden');
+                document.getElementById('reset-success-view').classList.remove('hidden');
+            }
+        });
+
+        function runTimer() {
+            let sec = 10;
+            const btn = document.getElementById('resend-btn');
+            const disp = document.getElementById('countdown-timer');
+            btn.disabled = true;
+            const intv = setInterval(() => {
+                sec--; disp.innerText = `${sec}s`;
+                if(sec <= 0) { clearInterval(intv); btn.disabled = false; disp.innerText = ''; }
+            }, 1000);
+        }
+
+        function pollVerif() {
+            const p = setInterval(async () => {
+                await auth.currentUser?.reload();
+                if(auth.currentUser?.emailVerified) { clearInterval(p); redirectToApp(auth.currentUser.email); }
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
