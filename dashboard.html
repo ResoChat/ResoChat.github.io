@@ -22,7 +22,7 @@
         body, html {
             margin: 0; padding: 0;
             height: 100vh; width: 100vw;
-            font-family: 'gg sans', 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             overflow: hidden;
             background-color: var(--bg-main);
             color: white;
@@ -31,105 +31,78 @@
         /* --- Animations --- */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes modalBounce { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
         .animate-fade { animation: fadeIn 0.3s ease forwards; }
         .animate-slide { animation: slideIn 0.2s ease forwards; }
 
-        /* --- UI Layout --- */
+        /* --- Layout --- */
         #loading-screen {
-            position: fixed; inset: 0;
-            background: radial-gradient(circle at center, #5865f2 0%, #313338 100%);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 9999; transition: opacity 0.5s ease;
+            position: fixed; inset: 0; background: var(--bg-main);
+            display: flex; justify-content: center; align-items: center; z-index: 9999;
         }
-
-        .dot { width: 12px; height: 12px; background: white; border-radius: 50%; animation: bounce 0.6s infinite alternate; margin: 0 4px; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
 
         .app-container { display: flex; height: 100vh; width: 100vw; visibility: hidden; }
 
-        .server-rail { width: 72px; background: var(--bg-servers); display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; }
-        .server-icon { width: 48px; height: 48px; background: var(--bg-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); color: var(--success); }
-        .server-icon:hover { border-radius: 16px; background: var(--success); color: white; }
-
+        .server-rail { width: 72px; background: var(--bg-servers); display: flex; flex-direction: column; align-items: center; padding-top: 12px; }
         .sidebar { width: 240px; background: var(--bg-sidebar); display: flex; flex-direction: column; }
-        .sidebar-header { padding: 12px; height: 48px; border-bottom: 1px solid rgba(0,0,0,0.2); display: flex; align-items: center; font-weight: 600; font-size: 14px; }
+        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); position: relative; }
 
+        /* --- Components --- */
         .dm-list { flex: 1; padding: 8px; overflow-y: auto; }
-        .dm-item { padding: 8px; border-radius: 4px; display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--text-muted); margin-bottom: 2px; transition: var(--transition); }
+        .dm-item { padding: 8px; border-radius: 4px; display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--text-muted); transition: var(--transition); }
         .dm-item:hover, .dm-item.active { background: #35373c; color: white; }
 
-        .user-settings { height: 52px; background: var(--bg-user); padding: 0 8px; display: flex; align-items: center; gap: 8px; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; text-transform: uppercase; color: white; flex-shrink: 0; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; flex-shrink: 0; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); position: relative; }
-        .top-nav { height: 48px; padding: 0 16px; border-bottom: 1px solid rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; }
+        .top-nav { height: 48px; padding: 0 16px; border-bottom: 1px solid rgba(0,0,0,0.2); display: flex; align-items: center; }
 
         /* --- Chat --- */
         .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .messages-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
-        .message { display: flex; gap: 16px; padding: 4px 0; transition: background 0.1s; }
-        .message:hover { background: rgba(0,0,0,0.05); }
-        .message-content { flex: 1; }
-        .msg-user { font-weight: 600; font-size: 15px; cursor: pointer; color: white; }
-        .msg-time { font-size: 11px; color: var(--text-muted); margin-left: 8px; }
-        .msg-text { color: #dbdee1; font-size: 15px; margin-top: 2px; word-break: break-word; }
+        .messages-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+        .message { display: flex; gap: 16px; padding: 4px 0; }
+        .msg-user { font-weight: 600; font-size: 15px; }
+        .msg-text { color: #dbdee1; font-size: 15px; margin-top: 2px; }
 
         .chat-input-wrapper { padding: 0 16px 24px 16px; }
-        .chat-input-box { background: var(--bg-input); border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+        .chat-input-box { background: var(--bg-input); border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; }
         .chat-input-box input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
 
-        /* --- Settings Modal --- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; }
-        .settings-panel { background: var(--bg-main); width: 600px; height: 400px; border-radius: 8px; position: relative; padding: 40px; animation: modalBounce 0.3s ease; }
-        .close-settings { position: absolute; top: 20px; right: 20px; cursor: pointer; color: var(--text-muted); }
+        /* --- Status Light --- */
+        #status-indicator {
+            position: fixed; bottom: 10px; left: 10px; width: 8px; height: 8px;
+            border-radius: 50%; background: var(--danger); z-index: 1000;
+        }
 
-        .nav-item { color: var(--text-muted); font-weight: 500; cursor: pointer; padding: 2px 8px; border-radius: 4px; font-size: 14px; transition: var(--transition); }
-        .nav-item.active { color: white; background: #3f4147; }
-        .section-label { text-transform: uppercase; font-size: 12px; font-weight: bold; color: var(--text-muted); margin: 20px 0 10px 0; }
+        .nav-item { margin: 0 8px; cursor: pointer; color: var(--text-muted); font-size: 14px; }
+        .nav-item.active { color: white; }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-    </div>
+    <div id="status-indicator" title="Connection Status"></div>
 
-    <div id="settings-modal" class="modal-overlay">
-        <div class="settings-panel">
-            <div class="close-settings" onclick="toggleSettings(false)"><i data-lucide="x-circle"></i></div>
-            <h2 style="margin-top:0;">User Settings</h2>
-            <div style="border-top: 1px solid #3f4147; padding-top: 20px;">
-                <button onclick="logout()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">Log Out</button>
-            </div>
-        </div>
+    <div id="loading-screen">
+        <h3>Loading ResoChat...</h3>
     </div>
 
     <div class="app-container" id="app-ui">
         <div class="server-rail">
-            <div class="server-icon"><i data-lucide="plus"></i></div>
+            <div style="width:48px; height:48px; background:var(--blurple); border-radius:16px; display:flex; align-items:center; justify-content:center;">
+                <i data-lucide="message-circle"></i>
+            </div>
         </div>
 
         <div class="sidebar">
-            <div class="sidebar-header">Direct Messages</div>
+            <div style="padding:12px; font-weight:bold; border-bottom:1px solid rgba(0,0,0,0.2);">Direct Messages</div>
             <div class="dm-list">
-                <div class="dm-item" id="friends-tab" onclick="showFriendsView('all')">
-                    <i data-lucide="users" style="width: 20px;"></i> Friends
-                </div>
-                <div class="section-label">Direct Messages</div>
+                <div class="dm-item" onclick="showFriendsView('all')"><i data-lucide="users"></i> Friends</div>
+                <div style="text-transform: uppercase; font-size: 11px; font-weight: bold; color: var(--text-muted); margin: 15px 8px 5px;">Direct Messages</div>
                 <div id="active-dms"></div>
             </div>
             
-            <div class="user-settings">
+            <div style="height:52px; background:var(--bg-user); padding:0 8px; display:flex; align-items:center; gap:8px;">
                 <div id="user-avatar" class="avatar">?</div>
-                <div style="flex:1; min-width:0;">
-                    <div class="username" id="display-username" style="font-weight:600; font-size:13px; overflow:hidden; text-overflow:ellipsis;">Loading...</div>
-                    <div style="font-size:11px; color:var(--text-muted);">Online</div>
-                </div>
-                <i data-lucide="settings" onclick="toggleSettings(true)" style="width:18px; color: var(--text-muted); cursor:pointer;"></i>
+                <div style="flex:1; overflow:hidden; text-overflow:ellipsis; font-size:13px; font-weight:600;" id="display-username">User</div>
+                <i data-lucide="log-out" onclick="logout()" style="width:18px; cursor:pointer; color:var(--text-muted);"></i>
             </div>
         </div>
 
@@ -144,11 +117,11 @@
         import { getFirestore, doc, getDoc, getDocs, setDoc, collection, query, where, onSnapshot, deleteDoc, addDoc, orderBy, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // CLEAN CONFIG: No Analytics/Storage to prevent 403 errors
         const firebaseConfig = {
             apiKey: "AIzaSyAQTMaN3vqB2SULVQLqy40VaMB413x7LGg",
             authDomain: "reso-chat.firebaseapp.com",
             projectId: "reso-chat",
-            storageBucket: "reso-chat.firebasestorage.app",
             messagingSenderId: "693778277273",
             appId: "1:693778277273:web:3419c420aa2018929aa908"
         };
@@ -156,16 +129,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const msgSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
 
         let currentUser = null;
         let unsubMessages = null;
 
+        // AUTH TRACKER
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userSnap = await getDoc(doc(db, "users", user.uid));
                 if (userSnap.exists()) {
                     currentUser = { ...userSnap.data(), uid: user.uid };
+                    document.getElementById('status-indicator').style.background = 'var(--success)';
                     initApp();
                 } else { window.location.href = "index.html"; }
             } else { window.location.href = "index.html"; }
@@ -173,101 +147,91 @@
 
         function initApp() {
             document.getElementById('display-username').innerText = currentUser.username;
-            const av = document.getElementById('user-avatar');
-            av.innerText = currentUser.username[0];
-            av.style.backgroundColor = getAvatarColor(currentUser.username);
+            document.getElementById('user-avatar').innerText = currentUser.username[0];
+            document.getElementById('user-avatar').style.background = '#5865f2';
             
             listenForFriends();
             showFriendsView('all');
             lucide.createIcons();
-
-            setTimeout(() => {
-                document.getElementById('loading-screen').style.opacity = '0';
-                document.getElementById('app-ui').style.visibility = 'visible';
-                setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
-            }, 1000);
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('app-ui').style.visibility = 'visible';
         }
 
-        // --- View Logic ---
+        // FRIENDS LIST LOGIC
+        function listenForFriends() {
+            onSnapshot(collection(db, "users", currentUser.uid, "friends"), (snap) => {
+                const list = document.getElementById('active-dms');
+                list.innerHTML = "";
+                snap.forEach(d => {
+                    const friend = d.data();
+                    const item = document.createElement('div');
+                    item.className = 'dm-item animate-slide';
+                    item.onclick = () => openChat(d.id, friend.username);
+                    item.innerHTML = `<div class="avatar" style="width:24px; height:24px; font-size:10px; background:#4e5058">${friend.username[0]}</div> <span>${friend.username}</span>`;
+                    list.appendChild(item);
+                });
+            });
+        }
 
         window.showFriendsView = (view) => {
             if(unsubMessages) unsubMessages();
             const topNav = document.getElementById('top-nav');
-            topNav.innerHTML = `
-                <i data-lucide="users" style="color: var(--text-muted); margin-right: 8px;"></i>
-                <span style="font-weight: bold; font-size: 15px;">Friends</span>
-                <div style="width: 1px; height: 24px; background: #3f4147; margin: 0 12px;"></div>
-                <span class="nav-item ${view==='all'?'active':''}" onclick="showFriendsView('all')">All</span>
-                <span class="nav-item ${view==='pending'?'active':''}" onclick="showFriendsView('pending')">Pending</span>
-                <button onclick="showAddFriendView()" style="background:var(--success); color:white; border:none; padding:4px 10px; border-radius:4px; margin-left:10px; cursor:pointer; font-weight:bold;">Add Friend</button>
-            `;
-            lucide.createIcons();
-
+            topNav.innerHTML = `<i data-lucide="users"></i> <span style="margin-left:10px; font-weight:bold;">Friends</span>`;
+            
             const area = document.getElementById('display-area');
-            area.style.padding = "20px";
-            area.innerHTML = `<div class="section-label">Loading...</div>`;
-
-            const q = view === 'all' 
-                ? collection(db, "users", currentUser.uid, "friends")
-                : query(collection(db, "friend_requests"), where("to", "==", currentUser.uid));
-
-            onSnapshot(q, (snap) => {
-                area.innerHTML = `<div class="section-label animate-slide">${view.toUpperCase()} — ${snap.size}</div>`;
-                if(snap.empty) {
-                    area.innerHTML += `<div class="animate-fade" style="text-align:center; margin-top:50px; color:var(--text-muted);"><p>Nothing here yet.</p></div>`;
-                    return;
-                }
-                snap.forEach(d => {
-                    const data = d.data();
-                    const name = data.username || data.fromName;
-                    const fuid = d.id;
-                    const row = document.createElement('div');
-                    row.className = 'dm-item animate-slide';
-                    row.style.justifyContent = 'space-between';
-                    row.innerHTML = `
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div class="avatar" style="background:${getAvatarColor(name)}">${name[0]}</div>
-                            <span style="font-weight:600;">${name}</span>
-                        </div>
-                        <div id="actions-${fuid}">
-                            ${view === 'all' ? `<i data-lucide="message-square" style="cursor:pointer;" onclick="openChat('${fuid}', '${name}')"></i>` : ''}
-                        </div>
-                    `;
-                    area.appendChild(row);
-                    if(view === 'pending') {
-                        const act = document.getElementById(`actions-${fuid}`);
-                        act.innerHTML = `<i data-lucide="check" style="color:var(--success); margin-right:15px; cursor:pointer;" onclick="accept('${d.id}', '${data.from}', '${data.fromName}')"></i>
-                                         <i data-lucide="x" style="color:var(--danger); cursor:pointer;" onclick="deny('${d.id}')"></i>`;
-                    }
-                });
-                lucide.createIcons();
-            });
+            area.innerHTML = `<div style="padding:20px;"><button onclick="showAddFriendView()" style="background:var(--success); color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Add Friend</button></div>`;
+            lucide.createIcons();
         };
 
+        window.showAddFriendView = () => {
+            const area = document.getElementById('display-area');
+            area.innerHTML = `
+                <div style="padding:20px;" class="animate-fade">
+                    <h3>Add Friend</h3>
+                    <div class="chat-input-box" style="max-width:400px;">
+                        <input type="text" id="target-username" placeholder="Enter username">
+                        <button onclick="sendFriendRequest()" style="background:var(--blurple); color:white; border:none; padding:5px 10px; border-radius:4px;">Add</button>
+                    </div>
+                    <p id="status-msg" style="margin-top:10px;"></p>
+                </div>`;
+        };
+
+        window.sendFriendRequest = async () => {
+            const name = document.getElementById('target-username').value.toLowerCase().trim();
+            const msg = document.getElementById('status-msg');
+            if(!name) return;
+
+            const snap = await getDoc(doc(db, "usernames", name));
+            if(snap.exists()) {
+                await addDoc(collection(db, "friend_requests"), {
+                    from: currentUser.uid, fromName: currentUser.username,
+                    to: snap.data().uid, status: 'pending'
+                });
+                msg.innerText = "Request sent!";
+                msg.style.color = "var(--success)";
+            } else {
+                msg.innerText = "User not found.";
+                msg.style.color = "var(--danger)";
+            }
+        };
+
+        // --- CHAT LOGIC ---
         window.openChat = (friendId, friendName) => {
             const topNav = document.getElementById('top-nav');
-            topNav.innerHTML = `
-                <div style="display:flex; align-items:center; gap:12px;" class="animate-slide">
-                    <div class="avatar" style="width:24px; height:24px; font-size:11px; background:${getAvatarColor(friendName)}">${friendName[0]}</div>
-                    <span style="font-weight:bold;">${friendName}</span>
-                </div>
-            `;
+            topNav.innerHTML = `<div style="font-weight:bold;">@ ${friendName}</div>`;
             
             const area = document.getElementById('display-area');
             area.className = "chat-area";
-            area.style.padding = "0";
             area.innerHTML = `
                 <div class="messages-container" id="messages-list"></div>
                 <div class="chat-input-wrapper">
                     <div class="chat-input-box">
                         <input type="text" id="msg-input" placeholder="Message @${friendName}">
                     </div>
-                </div>
-            `;
+                </div>`;
 
             const input = document.getElementById('msg-input');
-            input.focus();
-            input.addEventListener('keydown', (e) => {
+            input.addEventListener('keypress', (e) => {
                 if(e.key === 'Enter' && input.value.trim()) {
                     sendMessage(friendId, input.value.trim());
                     input.value = '';
@@ -280,26 +244,16 @@
             if(unsubMessages) unsubMessages();
             unsubMessages = onSnapshot(q, (snap) => {
                 const list = document.getElementById('messages-list');
-                const shouldPlaySound = !snap.metadata.hasPendingWrites && snap.docChanges().some(c => c.type === "added");
-                
                 list.innerHTML = '';
                 snap.forEach(doc => {
                     const m = doc.data();
-                    const time = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
                     list.innerHTML += `
                         <div class="message animate-fade">
-                            <div class="avatar" style="background:${getAvatarColor(m.senderName)}">${m.senderName[0]}</div>
-                            <div class="message-content">
-                                <div><span class="msg-user">${m.senderName}</span><span class="msg-time">${time}</span></div>
-                                <div class="msg-text">${m.text}</div>
-                            </div>
-                        </div>
-                    `;
+                            <div class="avatar" style="background:#5865f2">${m.senderName[0]}</div>
+                            <div><div class="msg-user">${m.senderName}</div><div class="msg-text">${m.text}</div></div>
+                        </div>`;
                 });
                 list.scrollTop = list.scrollHeight;
-                if(shouldPlaySound && snap.docs[snap.docs.length-1]?.data().senderId !== currentUser.uid) {
-                    msgSound.play().catch(()=>{});
-                }
             });
         };
 
@@ -307,96 +261,17 @@
             const chatId = [currentUser.uid, toId].sort().join('_');
             try {
                 await addDoc(collection(db, "chats", chatId, "messages"), {
-                    text, senderId: currentUser.uid, senderName: currentUser.username, timestamp: serverTimestamp()
+                    text: text,
+                    senderId: currentUser.uid,
+                    senderName: currentUser.username,
+                    timestamp: serverTimestamp()
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                alert("Failed to send: " + e.message);
+            }
         }
 
-        window.showAddFriendView = () => {
-            const area = document.getElementById('display-area');
-            area.style.padding = "20px";
-            area.innerHTML = `
-                <div style="max-width: 500px;" class="animate-fade">
-                    <h3 style="margin: 0;">ADD FRIEND</h3>
-                    <p style="color: var(--text-muted); font-size: 13px;">You can add friends with their ResoChat username.</p>
-                    <div class="chat-input-box" id="input-container" style="margin-top:20px; border:1px solid transparent;">
-                        <input type="text" id="target-username" placeholder="Enter a Username">
-                        <button id="send-btn" style="background:var(--blurple); color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Send Friend Request</button>
-                    </div>
-                    <p id="add-status" style="margin-top:12px; font-size:14px; font-weight:500;"></p>
-                </div>
-            `;
-
-            document.getElementById('send-btn').onclick = async () => {
-                const name = document.getElementById('target-username').value.toLowerCase().trim();
-                const status = document.getElementById('add-status');
-                const container = document.getElementById('input-container');
-                
-                if(!name || name === currentUser.username.toLowerCase()) {
-                    status.innerText = "Invalid username.";
-                    status.style.color = "var(--danger)";
-                    return;
-                }
-
-                // Check if already friends
-                const qFriend = query(collection(db, "users", currentUser.uid, "friends"), where("username", "==", name));
-                const friendSnap = await getDocs(qFriend);
-                if(!friendSnap.empty) {
-                    status.innerText = "You are already friends!";
-                    status.style.color = "var(--danger)";
-                    return;
-                }
-
-                const snap = await getDoc(doc(db, "usernames", name));
-                if(snap.exists()) {
-                    await addDoc(collection(db, "friend_requests"), {
-                        from: currentUser.uid, fromName: currentUser.username,
-                        to: snap.data().uid, status: 'pending'
-                    });
-                    status.style.color = "var(--success)";
-                    status.innerText = "Request sent to " + name;
-                } else {
-                    status.style.color = "var(--danger)";
-                    status.innerText = "User does not exist.";
-                }
-            };
-        };
-
-        window.accept = async (rid, fuid, fname) => {
-            await setDoc(doc(db, "users", currentUser.uid, "friends", fuid), { username: fname });
-            await setDoc(doc(db, "users", fuid, "friends", currentUser.uid), { username: currentUser.username });
-            await deleteDoc(doc(db, "friend_requests", rid));
-        };
-
-        window.deny = async (rid) => { await deleteDoc(doc(db, "friend_requests", rid)); };
-
-        function listenForFriends() {
-            onSnapshot(collection(db, "users", currentUser.uid, "friends"), (snap) => {
-                const list = document.getElementById('active-dms');
-                list.innerHTML = "";
-                snap.forEach(d => {
-                    const friend = d.data();
-                    const item = document.createElement('div');
-                    item.className = 'dm-item animate-slide';
-                    item.onclick = () => openChat(d.id, friend.username);
-                    item.innerHTML = `
-                        <div class="avatar" style="width:24px; height:24px; font-size:11px; background:${getAvatarColor(friend.username)}">${friend.username[0]}</div>
-                        <span style="font-size:14px;">${friend.username}</span>
-                    `;
-                    list.appendChild(item);
-                });
-            });
-        }
-
-        window.toggleSettings = (show) => { document.getElementById('settings-modal').style.display = show ? 'flex' : 'none'; };
-        window.logout = () => { signOut(auth).then(() => window.location.href = "index.html"); };
-
-        function getAvatarColor(name) {
-            const colors = ['#ff5c5c', '#5865f2', '#23a559', '#f1c40f', '#e67e22', '#9b59b6', '#1abc9c'];
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            return colors[Math.abs(hash) % colors.length];
-        }
+        window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
     </script>
 </body>
 </html>
