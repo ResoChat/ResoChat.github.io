@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResoChat | Dashboard</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-sidebar: #2b2d31;
+            --bg-main: #313338;
+            --bg-servers: #1e1f22;
+            --bg-user: #232428;
+            --text-muted: #b5bac1;
+            --blurple: #5865f2;
+            --success: #23a559;
+            --danger: #fa777a;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            font-family: 'gg sans', 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            background-color: var(--bg-main);
+            color: white;
+        }
+
+        /* --- Loading Screen --- */
+        #loading-screen {
+            position: fixed; inset: 0;
+            background: radial-gradient(circle at center, #5865f2 0%, #313338 100%);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; transition: opacity 0.5s ease;
+        }
+
+        .dots { display: flex; gap: 8px; }
+        .dot {
+            width: 12px; height: 12px;
+            background: white; border-radius: 50%;
+            animation: bounce 0.6s infinite alternate;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+
+        /* --- Main Layout --- */
+        .app-container {
+            display: flex; height: 100vh; width: 100vw;
+            visibility: hidden;
+        }
+
+        .server-rail {
+            width: 72px; background: var(--bg-servers);
+            display: flex; flex-direction: column; align-items: center;
+            padding-top: 12px; gap: 8px;
+        }
+
+        .server-icon {
+            width: 48px; height: 48px; background: var(--bg-main);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; cursor: pointer;
+            transition: all 0.2s; color: var(--success);
+        }
+        .server-icon:hover { border-radius: 16px; background: var(--success); color: white; }
+
+        .sidebar {
+            width: 240px; background: var(--bg-sidebar);
+            display: flex; flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 12px; height: 48px; border-bottom: 1px solid rgba(0,0,0,0.2);
+            display: flex; align-items: center; font-weight: 600; font-size: 14px;
+        }
+
+        .dm-list { flex: 1; padding: 8px; overflow-y: auto; }
+        .dm-item {
+            padding: 8px; border-radius: 4px; display: flex;
+            align-items: center; gap: 12px; cursor: pointer;
+            color: var(--text-muted); margin-bottom: 2px; transition: 0.1s;
+        }
+        .dm-item:hover { background: #35373c; color: white; }
+
+        .user-settings {
+            height: 52px; background: var(--bg-user);
+            padding: 0 8px; display: flex; align-items: center; gap: 8px;
+        }
+
+        .avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 14px; text-transform: uppercase; color: white;
+        }
+
+        .user-info { flex: 1; min-width: 0; }
+        .username { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .status { font-size: 11px; color: var(--text-muted); }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); }
+        .top-nav {
+            height: 48px; padding: 0 16px; border-bottom: 1px solid rgba(0,0,0,0.2);
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .nav-item { 
+            color: var(--text-muted); font-weight: 500; cursor: pointer; 
+            padding: 2px 8px; border-radius: 4px; font-size: 14px; margin: 0 4px;
+        }
+        .nav-item.active { color: white; background: #3f4147; }
+        .nav-item:hover:not(.active) { background: #35373c; color: #dbdee1; }
+
+        .friends-dashboard { flex: 1; padding: 20px; }
+        .section-label {
+            text-transform: uppercase; font-size: 12px; font-weight: bold;
+            color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 15px;
+        }
+
+        .empty-state {
+            height: 60%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: var(--text-muted);
+        }
+
+        /* Friend Search Styling */
+        .add-friend-input-wrap {
+            background: var(--bg-servers); padding: 10px; border-radius: 8px;
+            display: flex; gap: 10px; margin-top: 10px; 
+            border: 1px solid transparent; transition: border-color 0.2s;
+        }
+        .add-friend-input-wrap.invalid { border-color: var(--danger); }
+        .add-friend-input-wrap.valid { border-color: var(--success); }
+
+        .add-friend-input-wrap input {
+            flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+
+    <div class="app-container" id="app-ui">
+        <div class="server-rail">
+            <div class="server-icon"><i data-lucide="plus"></i></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">Direct Messages</div>
+            <div class="dm-list">
+                <div class="dm-item" onclick="showFriendsView('all')">
+                    <i data-lucide="users" style="width: 20px;"></i> Friends
+                </div>
+                <div style="margin-top: 15px;" class="section-label">Direct Messages</div>
+                <div id="active-dms"></div>
+            </div>
+            
+            <div class="user-settings">
+                <div id="user-avatar" class="avatar">?</div>
+                <div class="user-info">
+                    <div class="username" id="display-username">Loading...</div>
+                    <div class="status">Online</div>
+                </div>
+                <i data-lucide="settings" style="width:18px; color: var(--text-muted); cursor:pointer;"></i>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="top-nav">
+                <i data-lucide="users" style="color: var(--text-muted); margin-right: 8px;"></i>
+                <span style="font-weight: bold; font-size: 15px;">Friends</span>
+                <div style="width: 1px; height: 24px; background: #3f4147; margin: 0 12px;"></div>
+                <span class="nav-item active" id="btn-all" onclick="showFriendsView('all')">All</span>
+                <span class="nav-item" id="btn-pending" onclick="showFriendsView('pending')">Pending</span>
+                <button onclick="showAddFriendView()" id="btn-add" style="background: var(--success); border: none; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px;">Add Friend</button>
+            </div>
+
+            <div id="friends-display-area" class="friends-dashboard"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQTMaN3vqB2SULVQLqy40VaMB413x7LGg",
+            authDomain: "reso-chat.firebaseapp.com",
+            projectId: "reso-chat",
+            storageBucket: "reso-chat.firebasestorage.app",
+            messagingSenderId: "693778277273",
+            appId: "1:693778277273:web:3419c420aa2018929aa908"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        lucide.createIcons();
+
+        let currentUser = null;
+
+        // AUTH GUARD: Redirect if not logged in
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userSnap = await getDoc(doc(db, "users", user.uid));
+                if (userSnap.exists()) {
+                    currentUser = { ...userSnap.data(), uid: user.uid };
+                    initApp();
+                } else {
+                    // Auth exists but no profile, redirect to setup/login
+                    window.location.href = "https://ResoChat.github.io/index.html";
+                }
+            } else {
+                window.location.href = "https://ResoChat.github.io/index.html";
+            }
+        });
+
+        function initApp() {
+            document.getElementById('display-username').innerText = currentUser.username;
+            const av = document.getElementById('user-avatar');
+            av.innerText = currentUser.username[0];
+            av.style.backgroundColor = getAvatarColor(currentUser.username);
+            
+            listenForFriends();
+            showFriendsView('all');
+
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.opacity = '0';
+                document.getElementById('app-ui').style.visibility = 'visible';
+                setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
+            }, 2000);
+        }
+
+        window.showAddFriendView = () => {
+            updateNav('btn-add');
+            const area = document.getElementById('friends-display-area');
+            area.innerHTML = `
+                <div style="max-width: 500px;">
+                    <h3 style="margin: 0; font-size: 16px;">ADD FRIEND</h3>
+                    <p style="color: var(--text-muted); font-size: 13px;">You can add friends with their ResoChat username.</p>
+                    <div class="add-friend-input-wrap" id="input-container">
+                        <input type="text" id="target-username" placeholder="Enter a Username">
+                        <button id="send-btn" style="background:var(--blurple); color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Send Friend Request</button>
+                    </div>
+                    <p id="add-status" style="margin-top:12px; font-size:14px; font-weight:500;"></p>
+                </div>
+            `;
+
+            document.getElementById('send-btn').onclick = async () => {
+                const name = document.getElementById('target-username').value.toLowerCase().trim();
+                const status = document.getElementById('add-status');
+                const container = document.getElementById('input-container');
+                
+                // Reset state
+                container.classList.remove('invalid', 'valid');
+                status.innerText = "";
+
+                if(!name) return;
+
+                if (name === currentUser.username.toLowerCase()) {
+                    container.classList.add('invalid');
+                    status.style.color = "var(--danger)";
+                    status.innerText = "You cannot add yourself!";
+                    return;
+                }
+
+                const snap = await getDoc(doc(db, "usernames", name));
+                if(snap.exists()) {
+                    await addDoc(collection(db, "friend_requests"), {
+                        from: currentUser.uid,
+                        fromName: currentUser.username,
+                        to: snap.data().uid,
+                        status: 'pending'
+                    });
+                    container.classList.add('valid');
+                    status.style.color = "var(--success)";
+                    status.innerText = `Success! Friend Request Sent to: ${name}`;
+                    document.getElementById('target-username').value = "";
+                } else {
+                    container.classList.add('invalid');
+                    status.style.color = "var(--danger)";
+                    status.innerText = "Invalid Username: This user does not exist.";
+                }
+            };
+        };
+
+        window.showFriendsView = (view) => {
+            updateNav(view === 'all' ? 'btn-all' : 'btn-pending');
+            const area = document.getElementById('friends-display-area');
+            area.innerHTML = `<div class="section-label">${view.toUpperCase()} — 0</div>`;
+
+            const q = view === 'all' 
+                ? collection(db, "users", currentUser.uid, "friends")
+                : query(collection(db, "friend_requests"), where("to", "==", currentUser.uid));
+
+            onSnapshot(q, (snap) => {
+                area.innerHTML = `<div class="section-label">${view.toUpperCase()} — ${snap.size}</div>`;
+                if(snap.empty) {
+                    area.innerHTML += `<div class="empty-state"><i data-lucide="ghost" style="width:80px; height:80px; opacity:0.2;"></i><p>Nothing to show here.</p></div>`;
+                    lucide.createIcons();
+                    return;
+                }
+                snap.forEach(d => {
+                    const data = d.data();
+                    const name = data.username || data.fromName;
+                    const row = document.createElement('div');
+                    row.className = 'dm-item';
+                    row.style.justifyContent = 'space-between';
+                    row.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div class="avatar" style="background:${getAvatarColor(name)}">${name[0]}</div>
+                            <span style="font-weight:600; color:white;">${name}</span>
+                        </div>
+                        <div id="actions-${d.id}"></div>
+                    `;
+                    area.appendChild(row);
+
+                    if(view === 'pending') {
+                        const actions = document.getElementById(`actions-${d.id}`);
+                        actions.innerHTML = `<i data-lucide="check" class="nav-item" style="color:var(--success); padding:8px;" onclick="accept('${d.id}', '${data.from}', '${data.fromName}')"></i>`;
+                        actions.innerHTML += `<i data-lucide="x" class="nav-item" style="color:var(--danger); padding:8px;" onclick="deny('${d.id}')"></i>`;
+                    }
+                    lucide.createIcons();
+                });
+            });
+        };
+
+        window.accept = async (rid, fuid, fname) => {
+            await setDoc(doc(db, "users", currentUser.uid, "friends", fuid), { username: fname });
+            await setDoc(doc(db, "users", fuid, "friends", currentUser.uid), { username: currentUser.username });
+            await deleteDoc(doc(db, "friend_requests", rid));
+            showFriendsView('all');
+        };
+
+        window.deny = async (rid) => {
+            await deleteDoc(doc(db, "friend_requests", rid));
+        };
+
+        function listenForFriends() {
+            onSnapshot(collection(db, "users", currentUser.uid, "friends"), (snap) => {
+                const list = document.getElementById('active-dms');
+                list.innerHTML = "";
+                snap.forEach(d => {
+                    const friend = d.data();
+                    list.innerHTML += `
+                        <div class="dm-item">
+                            <div class="avatar" style="width:24px; height:24px; font-size:11px; background:${getAvatarColor(friend.username)}">${friend.username[0]}</div>
+                            <span style="font-size:14px;">${friend.username}</span>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function updateNav(activeId) {
+            document.querySelectorAll('.nav-item, button').forEach(el => el.classList.remove('active'));
+            const activeEl = document.getElementById(activeId);
+            if(activeEl) activeEl.classList.add('active');
+        }
+
+        function getAvatarColor(name) {
+            const colors = ['#ff5c5c', '#5865f2', '#23a559', '#f1c40f', '#e67e22', '#9b59b6', '#1abc9c'];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            return colors[Math.abs(hash) % colors.length];
+        }
+    </script>
+</body>
+</html>
