@@ -90,18 +90,17 @@
 
         /* --- Calling UI --- */
         #call-overlay {
-            position: fixed; inset: 0; background: rgba(15, 15, 15, 0.95);
+            position: fixed; inset: 0; background: rgba(15, 15, 15, 0.98);
             z-index: 20000; display: none; flex-direction: column;
             align-items: center; justify-content: center;
         }
-        .video-grid { display: flex; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; justify-content: center; }
-        video { width: 320px; height: 240px; background: #000; border-radius: 12px; object-fit: cover; border: 2px solid #444; }
+        .video-grid { display: flex; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; justify-content: center; width: 90%; }
+        video { width: 45%; max-width: 480px; aspect-ratio: 4/3; background: #000; border-radius: 12px; object-fit: cover; border: 2px solid #444; }
         .call-controls { display: flex; gap: 20px; }
         .ctrl-btn { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #313338; transition: 0.2s; }
         .ctrl-btn:hover { background: #404249; }
-        .ctrl-btn.active { background: white; color: black; }
+        .ctrl-btn.disabled { background: var(--danger); color: white; }
         .ctrl-btn.hangup { background: var(--danger); color: white; }
-        .ctrl-btn.hangup:hover { background: #d83c3e; }
 
         .incoming-call-popup {
             position: fixed; top: 20px; right: 20px; background: var(--bg-sidebar);
@@ -111,6 +110,7 @@
         }
         @keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
 
+        .friends-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #3f4147; }
         .btn { border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-blurple { background: var(--blurple); color: white; }
         .btn-success { background: var(--success); color: white; }
@@ -123,21 +123,21 @@
     </div>
 
     <div id="call-overlay">
-        <h2 id="call-status" style="margin-bottom:30px;">Calling...</h2>
+        <h2 id="call-status" style="margin-bottom:30px;">Connecting...</h2>
         <div class="video-grid">
             <video id="localVideo" autoplay muted playsinline></video>
             <video id="remoteVideo" autoplay playsinline></video>
         </div>
         <div class="call-controls">
-            <div class="ctrl-btn" id="toggle-mic" onclick="toggleMic()"><i data-lucide="mic"></i></div>
-            <div class="ctrl-btn" id="toggle-cam" onclick="toggleCam()"><i data-lucide="video"></i></div>
+            <div class="ctrl-btn" id="btn-mic" onclick="toggleMic()"><i data-lucide="mic"></i></div>
+            <div class="ctrl-btn" id="btn-cam" onclick="toggleCam()"><i data-lucide="video"></i></div>
             <div class="ctrl-btn hangup" onclick="endCall()"><i data-lucide="phone-off"></i></div>
         </div>
     </div>
 
     <div id="incoming-call" class="incoming-call-popup">
-        <div style="font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Incoming...</div>
-        <div id="caller-name" style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">Friend Name</div>
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Incoming Call</div>
+        <div id="caller-name" style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">Someone</div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-success" style="flex:1;" onclick="answerCall()">Answer</button>
             <button class="btn" style="background:var(--danger); color:white; flex:1;" onclick="declineCall()">Decline</button>
@@ -164,7 +164,10 @@
                 </div>
                 <div id="pfp-editor">
                     <canvas id="crop-canvas" width="300" height="300"></canvas>
-                    <div><button onclick="rotateImage()" class="btn">Rotate</button><button onclick="savePFP()" class="btn btn-success">Save PFP</button></div>
+                    <div style="margin-top:10px;">
+                        <button onclick="rotateImage()" class="btn">Rotate</button>
+                        <button onclick="savePFP()" class="btn btn-success">Save PFP</button>
+                    </div>
                 </div>
             </div>
             <div class="setting-card" style="border: 1px solid var(--danger);">
@@ -227,11 +230,12 @@
         let rotation = 0;
         let originalImg = null;
 
-        // --- CALLING STATE ---
+        // --- WebRTC Constants ---
+        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }], iceCandidatePoolSize: 10 };
+        let pc = null;
         let localStream = null;
+        let remoteStream = null;
         let currentCallId = null;
-        let isMicOn = true;
-        let isCamOn = true;
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -267,7 +271,19 @@
             });
         }
 
-        // --- CALLING LOGIC ---
+        // --- CORE WEBRTC FUNCTIONS ---
+        async function setupMedia(type) {
+            pc = new RTCPeerConnection(servers);
+            localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+            remoteStream = new MediaStream();
+
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            pc.ontrack = (event) => event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
+
+            document.getElementById('localVideo').srcObject = localStream;
+            document.getElementById('remoteVideo').srcObject = remoteStream;
+        }
+
         function listenForCalls() {
             const q = query(collection(db, "calls"), where("to", "==", currentUser.uid), where("status", "==", "pending"));
             onSnapshot(q, (snap) => {
@@ -281,34 +297,59 @@
 
         window.startCall = async (friendId, type) => {
             document.getElementById('call-overlay').style.display = 'flex';
-            document.getElementById('call-status').innerText = `Calling...`;
-            
-            localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
-            document.getElementById('localVideo').srcObject = localStream;
+            await setupMedia(type);
 
-            const callRef = await addDoc(collection(db, "calls"), {
+            const callDoc = doc(collection(db, "calls"));
+            const offerCandidates = collection(callDoc, 'offerCandidates');
+            currentCallId = callDoc.id;
+
+            pc.onicecandidate = (event) => event.candidate && addDoc(offerCandidates, event.candidate.toJSON());
+
+            const offerDescription = await pc.createOffer();
+            await pc.setLocalDescription(offerDescription);
+
+            await setDoc(callDoc, {
+                offer: { sdp: offerDescription.sdp, type: offerDescription.type },
                 from: currentUser.uid, fromName: currentUser.displayName || currentUser.username,
                 to: friendId, status: 'pending', type: type, timestamp: serverTimestamp()
             });
-            currentCallId = callRef.id;
 
-            onSnapshot(doc(db, "calls", currentCallId), (snap) => {
-                if(snap.data()?.status === 'accepted') document.getElementById('call-status').innerText = "Connected";
-                if(snap.data()?.status === 'ended') cleanupCall();
+            onSnapshot(callDoc, (snap) => {
+                const data = snap.data();
+                if (!pc.currentRemoteDescription && data?.answer) {
+                    pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+                    document.getElementById('call-status').innerText = "Connected";
+                }
+                if (data?.status === 'ended') cleanupCall();
+            });
+
+            onSnapshot(collection(callDoc, 'answerCandidates'), (snap) => {
+                snap.docChanges().forEach(change => { if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data())); });
             });
         };
 
         window.answerCall = async () => {
-            const snap = await getDoc(doc(db, "calls", currentCallId));
-            const type = snap.data().type;
             document.getElementById('incoming-call').style.display = 'none';
             document.getElementById('call-overlay').style.display = 'flex';
             
-            await updateDoc(doc(db, "calls", currentCallId), { status: 'accepted' });
-            localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
-            document.getElementById('localVideo').srcObject = localStream;
-            
-            onSnapshot(doc(db, "calls", currentCallId), (s) => { if(s.data()?.status === 'ended') cleanupCall(); });
+            const callDoc = doc(db, "calls", currentCallId);
+            const callData = (await getDoc(callDoc)).data();
+            await setupMedia(callData.type);
+
+            const answerCandidates = collection(callDoc, 'answerCandidates');
+            pc.onicecandidate = (event) => event.candidate && addDoc(answerCandidates, event.candidate.toJSON());
+
+            await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
+            const answerDescription = await pc.createAnswer();
+            await pc.setLocalDescription(answerDescription);
+
+            await updateDoc(callDoc, { answer: { type: answerDescription.type, sdp: answerDescription.sdp }, status: 'accepted' });
+            document.getElementById('call-status').innerText = "Connected";
+
+            onSnapshot(collection(callDoc, 'offerCandidates'), (snap) => {
+                snap.docChanges().forEach(change => { if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data())); });
+            });
+            onSnapshot(callDoc, (snap) => { if (snap.data()?.status === 'ended') cleanupCall(); });
         };
 
         window.declineCall = async () => {
@@ -323,45 +364,59 @@
 
         function cleanupCall() {
             if(localStream) localStream.getTracks().forEach(t => t.stop());
+            if(pc) pc.close();
             document.getElementById('call-overlay').style.display = 'none';
             document.getElementById('incoming-call').style.display = 'none';
             currentCallId = null;
         }
 
         window.toggleMic = () => {
-            isMicOn = !isMicOn;
-            localStream.getAudioTracks()[0].enabled = isMicOn;
-            document.getElementById('toggle-mic').classList.toggle('active', !isMicOn);
+            const enabled = localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled;
+            document.getElementById('btn-mic').classList.toggle('disabled', !enabled);
+            document.getElementById('btn-mic').innerHTML = enabled ? '<i data-lucide="mic"></i>' : '<i data-lucide="mic-off"></i>';
+            lucide.createIcons();
         };
 
         window.toggleCam = () => {
-            isCamOn = !isCamOn;
-            localStream.getVideoTracks()[0].enabled = isCamOn;
-            document.getElementById('toggle-cam').classList.toggle('active', !isCamOn);
+            const enabled = localStream.getVideoTracks()[0].enabled = !localStream.getVideoTracks()[0].enabled;
+            document.getElementById('btn-cam').classList.toggle('disabled', !enabled);
+            document.getElementById('btn-cam').innerHTML = enabled ? '<i data-lucide="video"></i>' : '<i data-lucide="video-off"></i>';
+            lucide.createIcons();
         };
 
-        // --- FRIENDS & CHAT ---
+        // --- FRIENDS & CHAT LOGIC ---
         window.showFriendsView = (view) => {
             if(unsubContent) unsubContent();
+            if(unsubChatProfile) unsubChatProfile();
             document.getElementById('friends-tab-btn').classList.add('active');
             const nav = document.getElementById('top-nav');
             nav.innerHTML = `<i data-lucide="users" style="color:var(--text-muted)"></i> <b style="font-size:16px;">Friends</b>
                              <div style="width:1px; height:24px; background:#3f4147; margin:0 12px;"></div>
-                             <span class="nav-item ${view==='all'?'active':''}" onclick="showFriendsView('all')" style="cursor:pointer; font-size:14px; color:var(--text-muted); padding:5px 8px;">All</span>
-                             <span class="nav-item ${view==='pending'?'active':''}" onclick="showFriendsView('pending')" style="cursor:pointer; font-size:14px; color:var(--text-muted); padding:5px 8px;">Pending</span>
+                             <span class="nav-item ${view==='all'?'active':''}" onclick="showFriendsView('all')" style="cursor:pointer; padding:5px 8px;">All</span>
+                             <span class="nav-item ${view==='pending'?'active':''}" onclick="showFriendsView('pending')" style="cursor:pointer; padding:5px 8px;">Pending</span>
                              <button onclick="showAddFriendView()" class="btn btn-success" style="margin-left:auto;">Add Friend</button>`;
             
             const area = document.getElementById('content-area');
             area.innerHTML = `<div style="padding:20px;" id="friends-list-render"></div>`;
-
             const q = view === 'all' ? collection(db, "users", currentUser.uid, "friends") : query(collection(db, "friend_requests"), where("to", "==", currentUser.uid));
+            
             unsubContent = onSnapshot(q, (snap) => {
                 const container = document.getElementById('friends-list-render'); container.innerHTML = "";
                 snap.forEach(d => {
                     const data = d.data(); const name = data.username || data.fromName;
                     const row = document.createElement('div'); row.className = 'friends-row';
-                    row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><div class="avatar" id="list-av-${d.id}" style="width:38px; height:38px; background:${getAvatarColor(name)}">${name[0].toUpperCase()}</div><b>${name}</b></div><div id="act-${d.id}"></div>`;
+                    row.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><div class="avatar" id="list-av-${d.id}">${name[0]}</div><b>${name}</b></div><div id="act-${d.id}"></div>`;
                     container.appendChild(row);
+                    
+                    // Live PFP in list
+                    onSnapshot(doc(db, "users", d.id), (s) => {
+                        const el = document.getElementById(`list-av-${d.id}`);
+                        if(el && s.exists()) {
+                            if(s.data().pfp) { el.style.backgroundImage = `url(${s.data().pfp})`; el.innerText=""; }
+                            else { el.style.background = getAvatarColor(name); el.innerText=name[0]; }
+                        }
+                    });
+
                     if(view === 'pending') {
                         document.getElementById(`act-${d.id}`).innerHTML = `<button onclick="acceptFriend('${d.id}', '${data.from}', '${data.fromName}')" class="btn btn-success">Accept</button>`;
                     } else {
@@ -378,62 +433,63 @@
             document.getElementById('friends-tab-btn').classList.remove('active');
             
             const nav = document.getElementById('top-nav');
-            nav.innerHTML = `
-                <div style="display:flex; align-items:center; gap:12px; flex:1;">
-                    <div id="chat-header-av" class="avatar" style="width:32px; height:32px; font-size:14px;">?</div>
-                    <b id="chat-header-name" style="font-size:16px;">${friendName}</b>
-                </div>
-                <div style="display:flex; gap:20px; color:var(--text-muted);">
-                    <i data-lucide="phone" onclick="startCall('${friendId}', 'voice')" style="cursor:pointer;"></i>
-                    <i data-lucide="video" onclick="startCall('${friendId}', 'video')" style="cursor:pointer;"></i>
-                </div>`;
+            nav.innerHTML = `<div style="display:flex; align-items:center; gap:12px; flex:1;">
+                <div id="chat-header-av" class="avatar">?</div>
+                <b id="chat-header-name">${friendName}</b>
+            </div>
+            <div style="display:flex; gap:20px; color:var(--text-muted);">
+                <i data-lucide="phone" onclick="startCall('${friendId}', 'voice')" style="cursor:pointer;"></i>
+                <i data-lucide="video" onclick="startCall('${friendId}', 'video')" style="cursor:pointer;"></i>
+            </div>`;
             
             unsubChatProfile = onSnapshot(doc(db, "users", friendId), (snap) => {
-                if(snap.exists()) {
-                    const data = snap.data(); const av = document.getElementById('chat-header-av');
-                    if(data.pfp) { av.style.backgroundImage = `url(${data.pfp})`; av.innerText = ""; }
-                    else { av.innerText = data.username[0].toUpperCase(); av.style.background = getAvatarColor(data.username); }
+                if(snap.exists()){
+                    const d = snap.data(); const av = document.getElementById('chat-header-av');
+                    document.getElementById('chat-header-name').innerText = d.displayName || d.username;
+                    if(d.pfp) { av.style.backgroundImage = `url(${d.pfp})`; av.innerText=""; }
+                    else { av.style.background = getAvatarColor(d.username); av.innerText=d.username[0]; }
                 }
             });
 
             const area = document.getElementById('content-area');
-            area.innerHTML = `<div class="messages-container" id="m-list"></div><div style="padding:0 16px 24px;"><div style="background:var(--bg-input); padding:10px 16px; border-radius:8px;"><input type="text" id="m-input" style="width:100%; background:transparent; border:none; color:white; outline:none;" placeholder="Message @${friendName}"></div></div>`;
-
+            area.innerHTML = `<div class="messages-container" id="m-list"></div><div style="padding:16px;"><input type="text" id="m-input" class="input-style" placeholder="Message @${friendName}"></div>`;
             const input = document.getElementById('m-input'); input.focus();
-            input.onkeydown = (e) => { if(e.key === 'Enter' && input.value.trim()){ sendMessage(friendId, input.value.trim()); input.value=''; }};
+            input.onkeydown = (e) => { if(e.key==='Enter' && input.value.trim()){ sendMessage(friendId, input.value.trim()); input.value=''; }};
 
             const chatId = [currentUser.uid, friendId].sort().join('_');
             unsubContent = onSnapshot(query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"), limit(50)), (snap) => {
                 const list = document.getElementById('m-list'); list.innerHTML = '';
                 snap.forEach(d => {
                     const m = d.data(); const time = m.timestamp ? m.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+                    const rowId = `msg-${d.id}`;
                     list.innerHTML += `<div class="message-row">
-                        <div class="avatar" style="width:40px; height:40px; background:${getAvatarColor(m.senderName)}">${m.senderName[0].toUpperCase()}</div>
-                        <div><div><b>${m.senderDisplayName || m.senderName}</b> <span style="font-size:11px; color:var(--text-muted)">${time}</span></div><div class="msg-text">${m.text}</div></div></div>`;
+                        <div class="avatar" id="msg-av-${rowId}">${m.senderName[0]}</div>
+                        <div><div><b id="msg-name-${rowId}">${m.senderDisplayName || m.senderName}</b> <span style="font-size:11px; color:var(--text-muted)">${time}</span></div><div class="msg-text">${m.text}</div></div></div>`;
+                    
+                    onSnapshot(doc(db, "users", m.senderId), (s) => {
+                        const av = document.getElementById(`msg-av-${rowId}`);
+                        const name = document.getElementById(`msg-name-${rowId}`);
+                        if(av && s.exists()){
+                            name.innerText = s.data().displayName || s.data().username;
+                            if(s.data().pfp){ av.style.backgroundImage = `url(${s.data().pfp})`; av.innerText=""; }
+                            else { av.style.background = getAvatarColor(s.data().username); av.innerText=s.data().username[0]; }
+                        }
+                    });
                 });
                 list.scrollTop = list.scrollHeight;
             });
             lucide.createIcons();
         };
 
-        // --- HELPERS ---
-        async function sendMessage(toId, text) {
-            const cid = [currentUser.uid, toId].sort().join('_');
-            await addDoc(collection(db, "chats", cid, "messages"), { text, senderId: currentUser.uid, senderName: currentUser.username, senderDisplayName: currentUser.displayName || currentUser.username, timestamp: serverTimestamp() });
-        }
-        window.acceptFriend = async (rid, fuid, fname) => {
-            await setDoc(doc(db, "users", currentUser.uid, "friends", fuid), { username: fname });
-            await setDoc(doc(db, "users", fuid, "friends", currentUser.uid), { username: currentUser.username });
-            await deleteDoc(doc(db, "friend_requests", rid));
-        };
+        // --- PROFILE & SYSTEM ---
         window.savePFP = async () => {
-            const canvas = document.getElementById('crop-canvas');
-            await updateDoc(doc(db, "users", currentUser.uid), { pfp: canvas.toDataURL('image/jpeg', 0.5) });
+            const dataUrl = document.getElementById('crop-canvas').toDataURL('image/jpeg', 0.5);
+            await updateDoc(doc(db, "users", currentUser.uid), { pfp: dataUrl });
             document.getElementById('pfp-editor').style.display = 'none';
         };
         window.updateProfile = async () => {
             await updateDoc(doc(db, "users", currentUser.uid), { displayName: document.getElementById('set-display-name').value });
-            alert("Updated!");
+            alert("Profile Updated!");
         };
         window.toggleSettings = (s) => {
             document.getElementById('settings-overlay').classList.toggle('open', s);
@@ -445,11 +501,27 @@
                 snap.forEach(d => {
                     const f = d.data(); const item = document.createElement('div'); item.className = 'dm-item';
                     item.onclick = () => openChat(d.id, f.username);
-                    item.innerHTML = `<div class="avatar" id="side-av-${d.id}" style="width:32px; height:32px; font-size:12px; background:${getAvatarColor(f.username)}">${f.username[0].toUpperCase()}</div><span>${f.username}</span>`;
+                    item.innerHTML = `<div class="avatar" id="side-av-${d.id}">${f.username[0]}</div><span>${f.username}</span>`;
                     list.appendChild(item);
+                    onSnapshot(doc(db, "users", d.id), (s) => {
+                        const el = document.getElementById(`side-av-${d.id}`);
+                        if(el && s.exists()){
+                            if(s.data().pfp){ el.style.backgroundImage = `url(${s.data().pfp})`; el.innerText=""; }
+                            else { el.style.background = getAvatarColor(f.username); el.innerText=f.username[0]; }
+                        }
+                    });
                 });
             });
         }
+        async function sendMessage(toId, text) {
+            const cid = [currentUser.uid, toId].sort().join('_');
+            await addDoc(collection(db, "chats", cid, "messages"), { text, senderId: currentUser.uid, senderName: currentUser.username, timestamp: serverTimestamp() });
+        }
+        window.acceptFriend = async (rid, fuid, fname) => {
+            await setDoc(doc(db, "users", currentUser.uid, "friends", fuid), { username: fname });
+            await setDoc(doc(db, "users", fuid, "friends", currentUser.uid), { username: currentUser.username });
+            await deleteDoc(doc(db, "friend_requests", rid));
+        };
         window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
         function getAvatarColor(n) { const c=['#ff5c5c', '#5865f2', '#23a559', '#f1c40f', '#e67e22', '#9b59b6', '#1abc9c']; let h=0; for(let i=0;i<n.length;i++) h=n.charCodeAt(i)+((h<<5)-h); return c[Math.abs(h)%c.length]; }
         document.getElementById('pfp-input').onchange=(e)=>{ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=(ev)=>{ originalImg=new Image(); originalImg.onload=()=>{ document.getElementById('pfp-editor').style.display='block'; drawCanvas(); }; originalImg.src=ev.target.result; }; r.readAsDataURL(f); };
